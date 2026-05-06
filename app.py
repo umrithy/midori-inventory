@@ -5,7 +5,6 @@ from datetime import datetime
 
 st.set_page_config(page_title="Midori Inventory Lab", page_icon="🍵", layout="wide")
 
-# --- CUSTOM CSS ---
 st.markdown("""
     <style>
     .main { background-color: #fcfaf5; }
@@ -39,40 +38,46 @@ with st.sidebar:
 
     st.divider()
     st.header("📈 Sales Velocity")
-    st.caption("Average drinks sold per day:")
     
-    # Weekday vs Weekend Logic
-    wd_sales = st.slider("Typical Weekday (M/W/Th/F)", 5, 100, 20)
-    we_sales = st.slider("Typical Weekend (Sa/Su)", 5, 150, 45)
-    tue_sales = st.slider("Tuesday (7am-12pm)", 5, 50, 10)
+    st.subheader("🍓 Strawberry")
+    s_wd = st.slider("Strawberry: Weekday", 0, 100, 20)
+    s_we = st.slider("Strawberry: Weekend", 0, 150, 40)
+    s_tue = st.slider("Strawberry: Tuesday", 0, 50, 10)
+    
+    st.subheader("🥭 Mango")
+    m_wd = st.slider("Mango: Weekday", 0, 100, 15)
+    m_we = st.slider("Mango: Weekend", 0, 150, 30)
+    m_tue = st.slider("Mango: Tuesday", 0, 50, 8)
+    
+    st.subheader("🫐 Blueberry")
+    b_wd = st.slider("Blueberry: Weekday", 0, 100, 10)
+    b_we = st.slider("Blueberry: Weekend", 0, 150, 25)
+    b_tue = st.slider("Blueberry: Tuesday", 0, 50, 5)
 
 # --- CALCULATION ENGINE ---
-# We calculate the NEXT 7 DAYS specifically based on today's day of the week
-def get_7_day_demand(daily_avg_wd, daily_avg_we, daily_avg_tue):
-    today = datetime.now().weekday() # 0=Mon, 1=Tue...
-    total_demand_drinks = 0
-    
+def get_7_day_demand(wd, we, tue):
+    today = datetime.now().weekday()
+    total_drinks = 0
     for i in range(7):
         day_to_check = (today + i) % 7
-        if day_to_check == 1: # Tuesday
-            total_demand_drinks += daily_avg_tue
-        elif day_to_check >= 5: # Sat/Sun
-            total_demand_drinks += daily_avg_we
-        else: # M/W/Th/F
-            total_demand_drinks += daily_avg_wd
-            
-    return total_demand_drinks * GRAMS_PER_DRINK * WASTE_BUFFER
+        if day_to_check == 1: total_drinks += tue
+        elif day_to_check >= 5: total_drinks += we
+        else: total_drinks += wd
+    return total_drinks * GRAMS_PER_DRINK * WASTE_BUFFER
 
 # --- DATA PROCESSING ---
-inventory_names = ["Strawberry", "Mango", "Blueberry"]
-current_stocks = [s_stock, m_stock, b_stock]
+inventory_data = {
+    "Strawberry": {"stock": s_stock, "params": (s_wd, s_we, s_tue)},
+    "Mango": {"stock": m_stock, "params": (m_wd, m_we, m_tue)},
+    "Blueberry": {"stock": b_stock, "params": (b_wd, b_we, b_tue)}
+}
 
-st.write(f"### 🗓️ Forecast for: {datetime.now().strftime('%A, %b %d')}")
+st.write(f"### 🗓️ Forecast for the next 7 days")
 cols = st.columns(3)
 
-for i, name in enumerate(inventory_names):
-    demand_7_days = get_7_day_demand(wd_sales, we_sales, tue_sales)
-    stock = current_stocks[i]
+for i, (name, data) in enumerate(inventory_data.items()):
+    demand_7_days = get_7_day_demand(*data['params'])
+    stock = data['stock']
     shortfall = max(0, demand_7_days - stock)
     batches = math.ceil(shortfall / YIELD_PER_BATCH)
     
@@ -83,7 +88,7 @@ for i, name in enumerate(inventory_names):
         else:
             st.error(f"**{name}**")
             st.metric("Shortfall", f"-{int(shortfall)}g", delta=f"Make {batches} batches")
-            st.caption(f"Need {int(demand_7_days)}g for next 7 days")
+            st.caption(f"Target: {int(demand_7_days)}g")
 
 st.divider()
-st.info("The AI is now calculating a custom 'Runway' based on your Tuesday half-day and higher weekend volume.")
+st.info("Each fruit now has its own unique weekday/weekend velocity. Adjust the sidebar to match your shop's actual trends.")
