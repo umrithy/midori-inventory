@@ -7,27 +7,26 @@ st.set_page_config(page_title="Midori Inventory Lab", page_icon="🍵", layout="
 st.markdown("""
     <style>
     .main { background-color: #fcfaf5; }
-    stMetric { background-color: #ffffff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
-    """, unsafe_content_safe=True)
+    """, unsafe_allow_html=True)
 
 st.title("🍵 Midori Puree Runway")
 st.subheader("7-Day Inventory Forecast & Prep Guide")
 
 # --- SETTINGS ---
-GRAMS_PER_DRINK = 40  # Updated per your instruction
+GRAMS_PER_DRINK = 40 
 
 # --- SIDEBAR: LIVE INPUTS ---
 with st.sidebar:
     st.header("📍 Current Shop Stock")
-    st.info("Enter the total grams currently in the fridge.")
+    st.info("Enter total grams currently in the fridge.")
     s_stock = st.number_input("Strawberry (g)", value=1500, step=100)
     m_stock = st.number_input("Mango (g)", value=800, step=100)
     b_stock = st.number_input("Blueberry (g)", value=2000, step=100)
     
     st.divider()
     st.header("📈 Daily Sales Velocity")
-    st.caption("How many of each drink are you selling per day?")
+    st.caption("How many of each drink per day?")
     s_sales = st.slider("Strawberry Matchas", 0, 100, 20)
     m_sales = st.slider("Mango Matchas", 0, 100, 15)
     b_sales = st.slider("Blueberry Matchas", 0, 100, 10)
@@ -48,22 +47,22 @@ for i, (fruit, data) in enumerate(inventory.items()):
     
     with cols[i]:
         if runway >= 7:
-            color = "inverse" # Green
             status_text = "✅ STOCKED"
+            color_label = "normal"
         elif runway >= 3:
-            color = "normal" # Yellow/Orange
             status_text = "⚠️ WATCHING"
+            color_label = "off"
         else:
-            color = "off" # Red
             status_text = "🚨 PREP NOW"
+            color_label = "inverse"
             
-        st.metric(label=f"{fruit} ({status_text})", value=f"{round(runway, 1)} Days", delta=f"{data['stock']}g left", delta_color=color)
+        st.metric(label=f"{fruit} ({status_text})", value=f"{round(runway, 1)} Days", delta=f"{data['stock']}g stock")
 
 st.divider()
 
 # --- PREP GUIDE SECTION ---
 st.write("### 📝 Next 7-Day Prep Guide")
-st.caption("To maintain a 7-day safety buffer, you need the following total stock:")
+st.caption("Target: Maintain a 7-day safety buffer.")
 
 prep_cols = st.columns(3)
 for i, (fruit, data) in enumerate(inventory.items()):
@@ -75,5 +74,3 @@ for i, (fruit, data) in enumerate(inventory.items()):
             st.error(f"Make **{shortfall}g** of {fruit}")
         else:
             st.success(f"{fruit} is fully prepped!")
-
-st.info("Tip: If you are seeing 'PREP NOW', check your raw fruit supply in the freezer.")
